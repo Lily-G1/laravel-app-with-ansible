@@ -1,0 +1,7 @@
+app_root: /var/www/html/laravel-realworld-example-app
+db_name: laravel_realworld_app_db
+db_user: admin1
+db_user_passwd: adminpassword1
+db_port: 3306
+db_host: 127.0.0.1
+server_name: localhost
