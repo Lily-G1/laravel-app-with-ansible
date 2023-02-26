@@ -1,0 +1,22 @@
+---
+
+- hosts: all
+  become: true
+  roles:
+    - setup
+
+- hosts: all
+  roles:
+    - composer
+
+- hosts: all
+  roles:
+    - deploy
+
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: Install PostgreSQL
+    script: scripts/postgreSQL-install.sh
