@@ -1,0 +1,132 @@
+---
+- name: Clone Laravel Project's Git Repo
+  become: true
+  git:
+    repo: https://github.com/f1amy/laravel-realworld-example-app.git
+    dest: "{{ app_root }}"
+    force: yes
+
+- name: Change Permissions of Project Folder to allow Composer Dependencies Install
+  become: true
+  file:
+    path: "{{ app_root }}"
+    owner: vagrant
+    group: www-data
+    recurse: yes
+    mode: '0777'
+
+- name: Copy env File
+  become: true
+  copy:
+    remote_src: yes
+    src: "{{ app_root }}/.env.example"
+    dest: "{{ app_root }}/.env"
+
+- name: Set Database Connection
+  become: true
+  lineinfile:
+    remote_src: yes
+    dest: "{{ app_root }}/.env"
+    regexp: '^DB_CONNECTION='
+    line: DB_CONNECTION=mysql
+
+- name: Set Database Host
+  become: true
+  lineinfile:
+    remote_src: yes
+    dest: "{{ app_root }}/.env"
+    regexp: '^DB_HOST='
+    line: DB_HOST="{{ db_host }}"
+
+- name: Set Database Port
+  become: true
+  lineinfile:
+    remote_src: yes
+    dest: "{{ app_root }}/.env"
+    regexp: '^DB_PORT='
+    line: DB_PORT="{{ db_port }}"
+
+- name: Set Database Name
+  become: true
+  lineinfile:
+    remote_src: yes
+    dest: "{{ app_root }}/.env"
+    regexp: '^DB_DATABASE='
+    line: DB_DATABASE="{{ db_name }}"
+
+- name: Set Database User Name
+  become: true
+  lineinfile:
+    remote_src: yes
+    dest: "{{ app_root }}/.env"
+    regexp: '^DB_USERNAME='
+    line: DB_USERNAME="{{ db_user }}"
+
+- name: Set Database User Password
+  become: true
+  lineinfile:
+    remote_src: yes
+    dest: "{{ app_root }}/.env"
+    regexp: '^DB_PASSWORD='
+    line: DB_PASSWORD="{{ db_user_passwd }}"
+
+
+- name: Install Dependencies with Composer
+  composer:
+    no-dev: no
+    working_dir: "{{ app_root }}"
+
+
+- name: Generate App Key
+  become: true
+  command: "/usr/bin/php {{ app_root }}/artisan key:generate"
+
+
+- name: Run Migration & Seeders
+  become: true
+  command: "/usr/bin/php {{ app_root }}/artisan migrate --seed"
+
+
+- name: Change Ownership of Project Folder
+  become: true
+  file:
+    path: "{{ app_root }}"
+    owner: www-data
+    group: www-data
+    recurse: yes
+    mode: '0755'
+
+- name: Change Permissions for Project Storage Folder
+  become: true
+  file:
+    path: "{{ app_root }}/storage"
+    mode: '0775'
+    recurse: yes
+
+
+- name: Change Permissions for Composer File
+  become: true
+  file:
+    path: /usr/local/bin/composer
+    owner: root
+    group: root
+    mode: '0755'
+
+
+- name: Copy Apache2 Config File
+  become: true
+  copy:
+    src: laravel.conf
+    dest: /etc/apache2/sites-available/laravel.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+
+- name: Enable New Apache2 Config
+  become: true
+  shell: | 
+      a2ensite laravel.conf
+      a2dissite 000-default.conf
+      a2enmod rewrite
+      service apache2 restart
